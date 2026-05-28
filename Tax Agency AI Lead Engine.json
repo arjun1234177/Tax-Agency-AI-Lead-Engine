@@ -12,14 +12,14 @@
         },
         "documentId": {
           "__rl": true,
-          "value": "1QfFoNl6SXWqr7APikcEa_Oq0FwRREDuGRWEABaZ0Vlo",
+          "value": "id",
           "mode": "list",
           "cachedResultName": "Raw Leads",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfFoNl6SXWqr7APikcEa_Oq0FwRREDuGRWEABaZ0Vlo/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "value": 539248136,
+          "value": 123,
           "mode": "list",
           "cachedResultName": "Form Responses 1",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfFoNl6SXWqr7APikcEa_Oq0FwRREDuGRWEABaZ0Vlo/edit#gid=539248136"
@@ -30,15 +30,15 @@
       "type": "n8n-nodes-base.googleSheetsTrigger",
       "typeVersion": 1,
       "position": [
-        -432,
-        16
+        -1872,
+        32
       ],
-      "id": "05c507bc-65d6-45f1-8108-2fbabca870bc",
+      "id": "id",
       "name": "Lead Intake Trigger",
       "credentials": {
         "googleSheetsTriggerOAuth2Api": {
-          "id": "St5nrwUQvJhYSGFZ",
-          "name": "Google Sheets Trigger account 2"
+          "id": "id",
+          "name": "Google Sheets Trigger account"
         }
       }
     },
@@ -47,31 +47,31 @@
         "assignments": {
           "assignments": [
             {
-              "id": "385da954-5fd4-4c38-9d1d-c17cbc7e0f96",
+              "id": "id",
               "name": "name",
               "value": "={{ $json['Full Name'] }}",
               "type": "string"
             },
             {
-              "id": "469f1732-35e6-4e16-b469-3795d6ecf98c",
+              "id": "id",
               "name": "email",
               "value": "={{ $json['Email Address'] }}",
               "type": "string"
             },
             {
-              "id": "e901ea3b-f521-49a1-b8e1-623857dc4dac",
+              "id": "id",
               "name": "phone",
               "value": "={{ $json['Phone Number'] }}",
               "type": "string"
             },
             {
-              "id": "8119a486-2a5c-4615-93df-4e4484e1128c",
+              "id": "id",
               "name": "tax_problem",
               "value": "={{ $json['What tax issue are you facing?'] }}",
               "type": "string"
             },
             {
-              "id": "50d64b2a-4627-44e7-8bf5-1f13a1f52495",
+              "id": "id",
               "name": "urgency",
               "value": "={{ $json['How urgent is this issue?'] }}",
               "type": "string"
@@ -83,10 +83,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -128,
-        0
+        -1568,
+        16
       ],
-      "id": "3593d65b-1960-4c38-9ca1-ef1b675363bd",
+      "id": "id",
       "name": "Clean Lead Data"
     },
     {
@@ -98,7 +98,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer id"
             },
             {
               "name": "Content-Type",
@@ -114,10 +114,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        144,
-        16
+        -1296,
+        32
       ],
-      "id": "86273dc7-53dc-4dc9-a49d-97b733226a1d",
+      "id": "id",
       "name": "HTTP Request"
     },
     {
@@ -128,70 +128,32 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        384,
-        16
+        -1056,
+        32
       ],
-      "id": "d435491d-b5cc-4d45-a736-cee5610a54ed",
+      "id": "id",
       "name": "Code in JavaScript"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.ultramsg.com/instance174741/messages/chat",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "token",
-              "value": "24swb2g3lk10f7ow"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "form-urlencoded",
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "=to",
-              "value": "918247739863"
-            },
-            {
-              "name": "body",
-              "value": "=\n🚨 New HOT Tax Lead\n👤 NAME : {{$json.fields.Name}}\n📌 PROBLEM : {{$json.fields['Tax Problem']}}\n🔥 LEAD SCORE : {{$json.fields['Lead Score']}}\n📞 Phone: {{ $json.fields.Phone }}\n📧 Email: {{ $json.fields.Email }}\n⚠ Urgency: {{ $json.fields.Urgency }}\n📌 Score: {{ $json.fields['Lead Score'] }}\n\n🧾 Issue:\n{{ $json.fields['Tax Problem'] }}\n\n🧠 AI SUMMARY : \n{{ $json.fields['AI Summary'] }}\n"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        1072,
-        0
-      ],
-      "id": "b19b6b61-c0cb-4ead-82d7-9c7e1804371b",
-      "name": "alert to lead"
-    },
-    {
-      "parameters": {
-        "sendTo": "={{ $('Create a record').item.json.fields.Email }}",
+        "sendTo": "={{ $json.Email }}",
         "subject": "We Received Your Tax Consultation Request",
-        "message": "=Hi {{ $('Create a record').item.json.fields.Name }},\n\n<!DOCTYPE html>\n\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n</head>\n<body style=\"font-family: Arial, sans-serif; background-color:#f4f4f4; padding:40px;\">\n\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n    <tr>\n      <td align=\"center\">\n\n```\n    <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #dddddd;\">\n\n      <tr>\n        <td style=\"background:#0f172a; padding:25px; text-align:center;\">\n          <h1 style=\"color:#ffffff; margin:0;\">Tax Consultancy Services</h1>\n        </td>\n      </tr>\n\n      <tr>\n        <td style=\"padding:40px; color:#333333;\">\n\n          <h2 style=\"margin-top:0;\">\n            Hello {{ $json.Name }},\n          </h2>\n\n          <p style=\"font-size:16px; line-height:1.7;\">\n            Thank you for contacting our tax consultancy team.\n          </p>\n\n          <p style=\"font-size:16px; line-height:1.7;\">\n            We have successfully received your request and our specialists are currently reviewing your case.\n          </p>\n\n          <div style=\"background:#f8fafc; border-left:4px solid #2563eb; padding:20px; margin:30px 0;\">\n            <strong>What happens next?</strong>\n            <ul style=\"padding-left:20px; line-height:1.8;\">\n              <li>A tax advisor will review your request</li>\n              <li>Our team will contact you shortly</li>\n              <li>Your information remains fully confidential</li>\n            </ul>\n          </div>\n\n          <div style=\"text-align:center; margin-top:35px;\">\n            <a href=\"https://yourwebsite.com\"\n               style=\"background:#2563eb; color:#ffffff; padding:14px 28px; text-decoration:none; border-radius:8px; font-weight:bold;\">\n              Visit Our Website\n            </a>\n          </div>\n\n          <p style=\"margin-top:40px; font-size:15px; color:#666666;\">\n            We appreciate the opportunity to assist you.\n          </p>\n\n          <p style=\"font-size:15px;\">\n            Regards,<br>\n            <strong>Tax Consultancy Team</strong>\n          </p>\n\n        </td>\n      </tr>\n\n      <tr>\n        <td style=\"background:#f1f5f9; padding:20px; text-align:center; font-size:13px; color:#666666;\">\n          © 2026 Tax Consultancy Services. All rights reserved.\n        </td>\n      </tr>\n\n    </table>\n\n  </td>\n</tr>\n```\n\n  </table>\n\n</body>\n</html>\n",
+        "message": "=Hi {{ $json.Name }},\n\n<!DOCTYPE html>\n\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n</head>\n<body style=\"font-family: Arial, sans-serif; background-color:#f4f4f4; padding:40px;\">\n\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n    <tr>\n      <td align=\"center\">\n\n```\n    <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #dddddd;\">\n\n      <tr>\n        <td style=\"background:#0f172a; padding:25px; text-align:center;\">\n          <h1 style=\"color:#ffffff; margin:0;\">Tax Consultancy Services</h1>\n        </td>\n      </tr>\n\n      <tr>\n        <td style=\"padding:40px; color:#333333;\">\n\n          <h2 style=\"margin-top:0;\">\n            Hello {{ $json.Name }},\n          </h2>\n\n          <p style=\"font-size:16px; line-height:1.7;\">\n            Thank you for contacting our tax consultancy team.\n          </p>\n\n          <p style=\"font-size:16px; line-height:1.7;\">\n            We have successfully received your request and our specialists are currently reviewing your case.\n          </p>\n\n          <div style=\"background:#f8fafc; border-left:4px solid #2563eb; padding:20px; margin:30px 0;\">\n            <strong>What happens next?</strong>\n            <ul style=\"padding-left:20px; line-height:1.8;\">\n              <li>A tax advisor will review your request</li>\n              <li>Our team will contact you shortly</li>\n              <li>Your information remains fully confidential</li>\n            </ul>\n          </div>\n\n          <div style=\"text-align:center; margin-top:35px;\">\n            <a href=\"https://yourwebsite.com\"\n               style=\"background:#2563eb; color:#ffffff; padding:14px 28px; text-decoration:none; border-radius:8px; font-weight:bold;\">\n              Visit Our Website\n            </a>\n          </div>\n\n          <p style=\"margin-top:40px; font-size:15px; color:#666666;\">\n            We appreciate the opportunity to assist you.\n          </p>\n\n          <p style=\"font-size:15px;\">\n            Regards,<br>\n            <strong>Tax Consultancy Team</strong>\n          </p>\n\n        </td>\n      </tr>\n\n      <tr>\n        <td style=\"background:#f1f5f9; padding:20px; text-align:center; font-size:13px; color:#666666;\">\n          © 2026 Tax Consultancy Services. All rights reserved.\n        </td>\n      </tr>\n\n    </table>\n\n  </td>\n</tr>\n```\n\n  </table>\n\n</body>\n</html>\n",
         "options": {}
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        1440,
-        -16
+        -176,
+        16
       ],
-      "id": "8a8abc97-b328-4eb1-8c41-eab77c639e2c",
+      "id": "id",
       "name": "Send a message",
-      "webhookId": "6759ce03-1ca0-4562-a616-9f25ee532895",
+      "webhookId": "id",
       "credentials": {
         "gmailOAuth2": {
-          "id": "GFWaKJchZAqF3QRA",
-          "name": "Gmail OAuth2 API"
+          "id": "id",
+          "name": "Gmail account"
         }
       }
     },
@@ -200,7 +162,7 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1lr-Yhzh0SCsN_TNPxIWFIELmceYIskf_M006TR8BfhM",
+          "value": "id",
           "mode": "list",
           "cachedResultName": "Tax Consultancy CRM",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lr-Yhzh0SCsN_TNPxIWFIELmceYIskf_M006TR8BfhM/edit?usp=drivesdk"
@@ -396,15 +358,39 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        752,
+        -752,
         16
       ],
-      "id": "4aa044f9-3e12-4c08-8891-0e68b9747fd9",
+      "id": "id",
       "name": "Append row in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "junrRScHqrYo96qP",
-          "name": "Google Sheets OAuth2 API"
+          "id": "62p4WkSMcvFFUWNf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "veeru143242@gmail.com",
+        "subject": "new lead received !!!!",
+        "emailType": "text",
+        "message": "=hello boss !!!\n\nnew lead received.\n\nname : {{ $json.Name }}\n\nemail : {{ $json.Email }}\n\nphone : {{ $json.Phone }}\n\nissue : {{ $json['Tax Problem'] }}\n\nsummary : {{ $json['AI Summary'] }}\n\nurgency : {{ $json.Urgency }}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        16
+      ],
+      "id": "id",
+      "name": "Send a message1",
+      "webhookId": "id",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "id",
+          "name": "Gmail account"
         }
       }
     }
@@ -455,22 +441,22 @@
         ]
       ]
     },
-    "alert to lead": {
+    "Append row in sheet": {
       "main": [
         [
           {
-            "node": "Send a message",
+            "node": "Send a message1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Append row in sheet": {
+    "Send a message1": {
       "main": [
         [
           {
-            "node": "alert to lead",
+            "node": "Send a message",
             "type": "main",
             "index": 0
           }
@@ -483,11 +469,11 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "856ce0aa-2ae2-445e-90c6-cca6efe0cd9c",
+  "versionId": "99c8c41a-53e5-4ce9-816e-c9798e55f9f1",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cd1bc373f66fc21466060d41aef3265f63417b8625ca28ca101c16aa6766c0c8"
+    "instanceId": "id"
   },
-  "id": "E1UvEwZhs5wleJAk",
+  "id": "id",
   "tags": []
 }
