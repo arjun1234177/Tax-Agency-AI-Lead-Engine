@@ -1,0 +1,493 @@
+{
+  "name": "Tax Agency AI Lead Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1QfFoNl6SXWqr7APikcEa_Oq0FwRREDuGRWEABaZ0Vlo",
+          "mode": "list",
+          "cachedResultName": "Raw Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfFoNl6SXWqr7APikcEa_Oq0FwRREDuGRWEABaZ0Vlo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 539248136,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfFoNl6SXWqr7APikcEa_Oq0FwRREDuGRWEABaZ0Vlo/edit#gid=539248136"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        16
+      ],
+      "id": "05c507bc-65d6-45f1-8108-2fbabca870bc",
+      "name": "Lead Intake Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "St5nrwUQvJhYSGFZ",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "385da954-5fd4-4c38-9d1d-c17cbc7e0f96",
+              "name": "name",
+              "value": "={{ $json['Full Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "469f1732-35e6-4e16-b469-3795d6ecf98c",
+              "name": "email",
+              "value": "={{ $json['Email Address'] }}",
+              "type": "string"
+            },
+            {
+              "id": "e901ea3b-f521-49a1-b8e1-623857dc4dac",
+              "name": "phone",
+              "value": "={{ $json['Phone Number'] }}",
+              "type": "string"
+            },
+            {
+              "id": "8119a486-2a5c-4615-93df-4e4484e1128c",
+              "name": "tax_problem",
+              "value": "={{ $json['What tax issue are you facing?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "50d64b2a-4627-44e7-8bf5-1f13a1f52495",
+              "name": "urgency",
+              "value": "={{ $json['How urgent is this issue?'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        0
+      ],
+      "id": "3593d65b-1960-4c38-9ca1-ef1b675363bd",
+      "name": "Clean Lead Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an AI assistant for a tax consulting agency. Return ONLY valid JSON. No explanations. No markdown.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze the client tax issue carefully.\\n\\nLead Information:\\nName: {{$json.name}}\\nTax Problem: {{$json.tax_problem}}\\nUrgency: {{$json.urgency}}\\n\\nReturn ONLY valid JSON.\\n\\nRules:\\n\\n1. urgency_level must ONLY be:\\n- LOW\\n- MEDIUM\\n- HIGH\\n\\n2. lead_score must ONLY be:\\n- COLD\\n- WARM\\n- HOT\\n\\n3. HOT means:\\n- urgent legal issue\\n- tax notice\\n- audit\\n- penalty\\n- business compliance issue\\n\\n4. WARM means:\\n- moderate tax consultation\\n- filing help\\n- GST support\\n\\n5. COLD means:\\n- general inquiry\\n- low urgency\\n- unclear issue\\n\\n6. summary must contain exactly 2 professional business sentences.\\n\\n7. email_reply must sound professional, reassuring, and client-friendly.\\n\\nReturn JSON in this EXACT structure:\\n\\n{\\\"lead_score\\\":\\\"\\\",\\\"urgency_level\\\":\\\"\\\",\\\"summary\\\":\\\"\\\",\\\"email_reply\\\":\\\"\\\"}\\n\\nReturn ONLY JSON.\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        144,
+        16
+      ],
+      "id": "86273dc7-53dc-4dc9-a49d-97b733226a1d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.choices[0].message.content;\n\nconst parsed = JSON.parse(raw);\n\n// ------------------------\n// CURRENT ITEM DATA\n// ------------------------\n\nconst name = $('Clean Lead Data').item.json.name;\nconst email = $('Clean Lead Data').item.json.email;\nconst phone = $('Clean Lead Data').item.json.phone;\nconst tax_problem = $('Clean Lead Data').item.json.tax_problem;\nconst urgency_input = $('Clean Lead Data').item.json.urgency;\n\n// ------------------------\n// SMART PRIORITY LOGIC\n// ------------------------\n\nlet priority_rank = 0;\n\npriority_rank += Number(parsed.lead_score || 0);\n\nif (\n  parsed.urgency_level &&\n  parsed.urgency_level.toLowerCase().includes('high')\n) {\n  priority_rank += 50;\n}\n\nconst issue = tax_problem.toLowerCase();\n\nif (issue.includes('gst')) priority_rank += 20;\nif (issue.includes('notice')) priority_rank += 30;\nif (issue.includes('income tax')) priority_rank += 25;\nif (issue.includes('penalty')) priority_rank += 20;\nif (issue.includes('audit')) priority_rank += 40;\nif (issue.includes('legal')) priority_rank += 35;\n\nif (\n  urgency_input &&\n  urgency_input.toLowerCase().includes('urgent')\n) {\n  priority_rank += 25;\n}\n\nif (priority_rank > 100) {\n  priority_rank = 100;\n}\n//const lead_id = `${email}_${phone}_${tax_problem}`.toLowerCase();\n// ------------------------\n// RETURN FINAL DATA\n// ------------------------\n\nreturn {\n  json: {\n    name,\n    email,\n    phone,\n    tax_problem,\n    urgency_input,\n\n    lead_score: parsed.lead_score,\n    urgency_level: parsed.urgency_level,\n    summary: parsed.summary,\n    email_reply: parsed.email_reply,\n\n    priority_rank\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        16
+      ],
+      "id": "d435491d-b5cc-4d45-a736-cee5610a54ed",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ultramsg.com/instance174741/messages/chat",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "24swb2g3lk10f7ow"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=to",
+              "value": "918247739863"
+            },
+            {
+              "name": "body",
+              "value": "=\n🚨 New HOT Tax Lead\n👤 NAME : {{$json.fields.Name}}\n📌 PROBLEM : {{$json.fields['Tax Problem']}}\n🔥 LEAD SCORE : {{$json.fields['Lead Score']}}\n📞 Phone: {{ $json.fields.Phone }}\n📧 Email: {{ $json.fields.Email }}\n⚠ Urgency: {{ $json.fields.Urgency }}\n📌 Score: {{ $json.fields['Lead Score'] }}\n\n🧾 Issue:\n{{ $json.fields['Tax Problem'] }}\n\n🧠 AI SUMMARY : \n{{ $json.fields['AI Summary'] }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "b19b6b61-c0cb-4ead-82d7-9c7e1804371b",
+      "name": "alert to lead"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Create a record').item.json.fields.Email }}",
+        "subject": "We Received Your Tax Consultation Request",
+        "message": "=Hi {{ $('Create a record').item.json.fields.Name }},\n\n<!DOCTYPE html>\n\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n</head>\n<body style=\"font-family: Arial, sans-serif; background-color:#f4f4f4; padding:40px;\">\n\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n    <tr>\n      <td align=\"center\">\n\n```\n    <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #dddddd;\">\n\n      <tr>\n        <td style=\"background:#0f172a; padding:25px; text-align:center;\">\n          <h1 style=\"color:#ffffff; margin:0;\">Tax Consultancy Services</h1>\n        </td>\n      </tr>\n\n      <tr>\n        <td style=\"padding:40px; color:#333333;\">\n\n          <h2 style=\"margin-top:0;\">\n            Hello {{ $json.Name }},\n          </h2>\n\n          <p style=\"font-size:16px; line-height:1.7;\">\n            Thank you for contacting our tax consultancy team.\n          </p>\n\n          <p style=\"font-size:16px; line-height:1.7;\">\n            We have successfully received your request and our specialists are currently reviewing your case.\n          </p>\n\n          <div style=\"background:#f8fafc; border-left:4px solid #2563eb; padding:20px; margin:30px 0;\">\n            <strong>What happens next?</strong>\n            <ul style=\"padding-left:20px; line-height:1.8;\">\n              <li>A tax advisor will review your request</li>\n              <li>Our team will contact you shortly</li>\n              <li>Your information remains fully confidential</li>\n            </ul>\n          </div>\n\n          <div style=\"text-align:center; margin-top:35px;\">\n            <a href=\"https://yourwebsite.com\"\n               style=\"background:#2563eb; color:#ffffff; padding:14px 28px; text-decoration:none; border-radius:8px; font-weight:bold;\">\n              Visit Our Website\n            </a>\n          </div>\n\n          <p style=\"margin-top:40px; font-size:15px; color:#666666;\">\n            We appreciate the opportunity to assist you.\n          </p>\n\n          <p style=\"font-size:15px;\">\n            Regards,<br>\n            <strong>Tax Consultancy Team</strong>\n          </p>\n\n        </td>\n      </tr>\n\n      <tr>\n        <td style=\"background:#f1f5f9; padding:20px; text-align:center; font-size:13px; color:#666666;\">\n          © 2026 Tax Consultancy Services. All rights reserved.\n        </td>\n      </tr>\n\n    </table>\n\n  </td>\n</tr>\n```\n\n  </table>\n\n</body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        -16
+      ],
+      "id": "8a8abc97-b328-4eb1-8c41-eab77c639e2c",
+      "name": "Send a message",
+      "webhookId": "6759ce03-1ca0-4562-a616-9f25ee532895",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GFWaKJchZAqF3QRA",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1lr-Yhzh0SCsN_TNPxIWFIELmceYIskf_M006TR8BfhM",
+          "mode": "list",
+          "cachedResultName": "Tax Consultancy CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lr-Yhzh0SCsN_TNPxIWFIELmceYIskf_M006TR8BfhM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lr-Yhzh0SCsN_TNPxIWFIELmceYIskf_M006TR8BfhM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Name": "={{ $json.name }}",
+            "Phone": "={{ $json.phone }}",
+            "Email": "={{ $json.email }}",
+            "Tax Problem": "={{ $json.tax_problem }}",
+            "AI Summary": "={{ $json.summary }}",
+            "Urgency": "={{ $json.urgency_level }}",
+            "Lead Status": "new",
+            "Lead Score": "={{ $json.lead_score }}",
+            "Consultation Booked": "pending",
+            "Contacted?": "No",
+            "Source": "Google Form",
+            "Priority Rank": "={{ $json.urgency_level }}",
+            "Created Time": "={{ $now }}",
+            "| Q | Lead ID |": "={{ $json.lead_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tax Problem",
+              "displayName": "Tax Problem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Status",
+              "displayName": "Lead Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Consultation Booked",
+              "displayName": "Consultation Booked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up Date",
+              "displayName": "Follow Up Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contacted?",
+              "displayName": "Contacted?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority Rank",
+              "displayName": "Priority Rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created Time",
+              "displayName": "Created Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "| Q | Lead ID |",
+              "displayName": "| Q | Lead ID |",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        752,
+        16
+      ],
+      "id": "4aa044f9-3e12-4c08-8891-0e68b9747fd9",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "junrRScHqrYo96qP",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Lead Intake Trigger": {
+      "main": [
+        [
+          {
+            "node": "Clean Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Lead Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "alert to lead": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "alert to lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "856ce0aa-2ae2-445e-90c6-cca6efe0cd9c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cd1bc373f66fc21466060d41aef3265f63417b8625ca28ca101c16aa6766c0c8"
+  },
+  "id": "E1UvEwZhs5wleJAk",
+  "tags": []
+}
